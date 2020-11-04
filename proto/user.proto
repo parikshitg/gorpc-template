@@ -7,12 +7,23 @@ message UserRegistrationRequest {
     string name = 1;
     string phone = 2;
     string email = 3;
+    string password = 4;
 }
 
 message UserRegistrationResponse {
     string message = 1;
 }
 
+message UserLoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message UserLoginResponse {
+    string message = 1;
+}
+
 service UserService {
     rpc Registration(UserRegistrationRequest) returns (UserRegistrationResponse) {};
+    rpc Login(UserLoginRequest) returns (UserLoginResponse) {};
 }

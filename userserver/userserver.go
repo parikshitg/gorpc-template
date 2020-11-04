@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -15,17 +16,31 @@ import (
 )
 
 type user struct {
-	Name  string
-	Phone string
-	Email string
+	Name     string
+	Phone    string
+	Email    string
+	Password string
 }
 
 func (*user) Registration(ctx context.Context, request *protopb.UserRegistrationRequest) (*protopb.UserRegistrationResponse, error) {
-	name := request.Name
-	response := &protopb.UserRegistrationResponse{
-		Message: "Name :" + name + "phone : " + request.Phone + "email : " + request.Email,
+
+	if IfUserExists(request.Email, request.Password) {
+		return nil, errors.New("User Already Exists")
 	}
-	Create(request.Name, request.Phone, request.Email)
+	response := &protopb.UserRegistrationResponse{
+		Message: "Successfully Registered user :" + request.Name,
+	}
+	CreateUser(request.Name, request.Phone, request.Email, request.Password)
+	return response, nil
+}
+
+func (*user) Login(ctx context.Context, request *protopb.UserLoginRequest) (*protopb.UserLoginResponse, error) {
+	response := &protopb.UserLoginResponse{
+		Message: "Successfully Login user with email :" + request.Email,
+	}
+	if !IfUserExists(request.Email, request.Password) {
+		return nil, errors.New("User does not exists")
+	}
 	return response, nil
 }
 
@@ -65,6 +80,15 @@ func main() {
 	s.Serve(lis)
 }
 
-func Create(name, phone, email string) {
-	db.Create(&user{Name: name, Phone: phone, Email: email})
+func CreateUser(name, phone, email, password string) {
+	db.Create(&user{Name: name, Phone: phone, Email: email, Password: password})
+}
+
+func IfUserExists(email, password string) bool {
+	var u user
+	db.Where("email = ?", email).First(&u)
+	if email != u.Email && password != u.Password {
+		return false
+	}
+	return true
 }
