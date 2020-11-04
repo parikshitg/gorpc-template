@@ -24,7 +24,7 @@ type user struct {
 
 func (*user) Registration(ctx context.Context, request *protopb.UserRegistrationRequest) (*protopb.UserRegistrationResponse, error) {
 
-	if IfUserExists(request.Email, request.Password) {
+	if ExistingUser(request.Email, request.Password) {
 		return nil, errors.New("User Already Exists")
 	}
 	response := &protopb.UserRegistrationResponse{
@@ -38,9 +38,32 @@ func (*user) Login(ctx context.Context, request *protopb.UserLoginRequest) (*pro
 	response := &protopb.UserLoginResponse{
 		Message: "Successfully Login user with email :" + request.Email,
 	}
-	if !IfUserExists(request.Email, request.Password) {
+	if !ExistingUser(request.Email, request.Password) {
 		return nil, errors.New("User does not exists")
 	}
+	return response, nil
+}
+
+func (*user) List(ctx context.Context, request *protopb.UserListRequest) (*protopb.UserListResponse, error) {
+
+	if !ExistingUser(request.Email, request.Password) {
+		return nil, errors.New("User does not exists")
+	}
+
+	users := ListUser(request.Email, request.Password)
+	response := &protopb.UserListResponse{
+		UsersList: make([]*protopb.User, len(users)),
+	}
+
+	for i := range users {
+		response.UsersList[i] = &protopb.User{
+			Name:     users[i].Name,
+			Phone:    users[i].Phone,
+			Email:    users[i].Email,
+			Password: users[i].Password,
+		}
+	}
+
 	return response, nil
 }
 
@@ -84,11 +107,17 @@ func CreateUser(name, phone, email, password string) {
 	db.Create(&user{Name: name, Phone: phone, Email: email, Password: password})
 }
 
-func IfUserExists(email, password string) bool {
+func ExistingUser(email, password string) bool {
 	var u user
 	db.Where("email = ?", email).First(&u)
 	if email != u.Email && password != u.Password {
 		return false
 	}
 	return true
+}
+
+func ListUser(email, password string) []user {
+	var u []user
+	db.Find(&u)
+	return u
 }

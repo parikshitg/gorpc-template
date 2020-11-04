@@ -23,7 +23,24 @@ message UserLoginResponse {
     string message = 1;
 }
 
+message UserListRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message UserListResponse {
+    repeated User usersList = 1;
+}
+
+message User{
+    string name= 1;
+    string phone = 2;
+    string email = 3;
+    string password = 4;
+}
+
 service UserService {
     rpc Registration(UserRegistrationRequest) returns (UserRegistrationResponse) {};
     rpc Login(UserLoginRequest) returns (UserLoginResponse) {};
+    rpc List(UserListRequest) returns (UserListResponse) {};
 }
